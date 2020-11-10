@@ -1,10 +1,19 @@
 package main
 
 import (
-	"log"
+	//"log"
+
+	"encoding/json"
 
 	"github.com/cloudevents/sdk-go/pkg/cloudevents"
 	keptn "github.com/keptn/go-utils/pkg/lib"
+
+	"fmt"
+	"time"
+
+	sc "example.com/splunk-service/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 /**
@@ -52,7 +61,7 @@ func HandleDeploymentFinishedEvent(myKeptn *keptn.Keptn, incomingEvent cloudeven
 	// ToDo: Implement your tests here
 
 	// Send Test Finished Event
-	// return myKeptn.SendTestsFinishedEvent(&incomingEvent, "", "", startTime, "pass", nil, "keptn-service-template-go")
+	// return myKeptn.SendTestsFinishedEvent(&incomingEvent, "", "", startTime, "pass", nil, "splunk-service")
 	return nil
 }
 
@@ -82,57 +91,46 @@ func HandleStartEvaluationEvent(myKeptn *keptn.Keptn, incomingEvent cloudevents.
 //
 func HandleEvaluationDoneEvent(myKeptn *keptn.Keptn, incomingEvent cloudevents.Event, data *keptn.EvaluationDoneEventData) error {
 	log.Printf("Handling Evaluation Done Event: %s", incomingEvent.Context.GetID())
+	//log.Printf(" &{}", data)
 
-	return nil
-}
-
-//
-// Handles InternalGetSLIEventType = "sh.keptn.internal.event.get-sli"
-// TODO: add in your handler code
-//
-func HandleInternalGetSLIEvent(myKeptn *keptn.Keptn, incomingEvent cloudevents.Event, data *keptn.InternalGetSLIEventData) error {
-	log.Printf("Handling Internal Get SLI Event: %s", incomingEvent.Context.GetID())
-
-	incomingGetSLIEventData := &keptn.InternalGetSLIEventData{}
-	incomingEvent.DataAs(incomingGetSLIEventData)
-
-	// Step 1 - Do we need to do something?
-	// Lets make sure we are only processing an event that really belongs to our SLI Provider
-	/* if incomingGetSLIEventData.SLIProvider != "keptn-service-template-go" {
-		return nil
-	}*/
-
-	// Step 2 - prep-work
-	// Get any additional input / configuration data, e.g
-	// Labels: get the incoming labels for potential config data and use it to pass more labels on result, e.g: links
-	// SLI.yaml: if your service uses SLI.yaml to store query definitions for SLIs get that file from Keptn
-	/* labels := incomingGetSLIEventData.Labels
-	if labels == nil {
-		labels = make(map[string]string)
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+	dataField, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
 	}
-	testRunID := labels["testRunId"]*/
-
-	// sliConfigFileContent, err := myKeptn.GetKeptnResource("keptn-service-template-go/sli.yaml")
-
-	// Step 3 - do your work - iterate through the list of requested indicators and return their values
-	// Indicators: this is the list of indicators as requested in the SLO.yaml
-	// SLIResult: this is the array that will receive the results
-	/* indicators := incomingGetSLIEventData.Indicators
-	sliResults := []*keptn.SLIResult{}
-
-	for _, indicatorName := range indicators {
-		sliResult := &keptn.SLIResult{
-			Metric: indicatorName,
-			Value:  123.4,
-		}
-		sliResults = append(sliResults, sliResult)
-	}*/
-
-	// Step 4 - add additional context via labels
-	// labels["Link to Data Source"] = "https://mydatasource/myquery?testRun=" + testRunID
-
-	// Step 4 - send results back to Keptn
-	// return myKeptn.SendInternalGetSLIDoneEvent(incomingGetSLIEventData, sliResults, labels, err, "keptn-service-template-go")
+	configFile := "splunk/hec.config.yaml"
+	conf, err := sc.SetConfiguration(configFile)
+	if err != nil {
+		log.Errorf("%s", err)
+		return err
+	}
+	conf.LogLevel = log.DebugLevel
+	//log.SetLevel(conf.LogLevel)
+	fwdclient, err := sc.SetClient(conf)
+	if err != nil {
+		log.Errorf("%s", err)
+		return err
+	}
+	//log.Printf("%s", conf.Payload.Index)
+	log.Debugf("%s", string(dataField))
+	msg := sc.EventRequest{
+		Message: fmt.Sprintf("This message on %s\"", time.Now().String()),
+		Index:   conf.Payload.Index,
+		Fields: map[string]string{
+			"name": fwdclient.AppName,
+		},
+		Data:       string(dataField),
+		Source:     conf.Payload.Source,
+		SourceType: conf.Payload.SourceType,
+	}
+	log.Debugf("message=\"%v\"", msg)
+	if err := fwdclient.SubmitEvent(msg); err != nil {
+		log.Errorf("%s", err)
+		return err
+	}
 
 	return nil
 }

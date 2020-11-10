@@ -1,0 +1,12 @@
+---
+payload:
+    proto: https
+    host: <domain_name>.splunkcloud.com         #change <domain_name> to splunk cloud organization name 
+    port: 443
+    token: AAAAAA12-BB22-CC33-DD44-00ABCDEF     # Splunk token
+    index: preview
+    sourcetype: keptn-pipeline-source
+    source : keptn
+    endpoints:
+        health: /services/collector/health
+        raw: /services/collector/raw

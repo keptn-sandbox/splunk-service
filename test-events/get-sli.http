@@ -32,7 +32,7 @@ Content-Type: application/cloudevents+json
     "teststrategy": "performance",
     "labels": {
       "testid": "12345",
-      "buildId": "build17",
+      "buildnr": "build17",
       "runby": "JohnDoe"
     }
   },

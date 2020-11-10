@@ -36,6 +36,7 @@ type envConfig struct {
  * See https://github.com/keptn/spec/blob/0.1.3/cloudevents.md for details on the payload
  */
 func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error {
+
 	myKeptn, err := keptn.NewKeptn(&event, keptnOptions)
 
 	log.Printf("gotEvent(%s): %s - %s", event.Type(), myKeptn.KeptnContext, event.Context.GetID())
@@ -96,6 +97,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		log.Printf("Processing Evaluation Done Event")
 
 		evaluationDoneEventData := &keptn.EvaluationDoneEventData{}
+
 		err := event.DataAs(evaluationDoneEventData)
 		if err != nil {
 			log.Printf("Got Data Error: %s", err.Error())
@@ -148,6 +150,10 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	return errors.New(errorMsg)
 }
 
+func runLoadTests() {
+	log.Printf("This is testing function ")
+}
+
 /**
  * Usage: ./main
  * no args: starts listening for cloudnative events on localhost:port/path
@@ -185,9 +191,6 @@ func _main(args []string, env envConfig) int {
 		cloudeventshttp.WithPath(env.Path),
 	)
 
-	log.Println("Starting keptn-service-template-go...")
-	log.Printf("    on Port = %d; Path=%s", env.Port, env.Path)
-
 	if err != nil {
 		log.Fatalf("failed to create transport, %v", err)
 	}
@@ -195,8 +198,8 @@ func _main(args []string, env envConfig) int {
 	if err != nil {
 		log.Fatalf("failed to create client, %v", err)
 	}
-
-	log.Fatalf("failed to start receiver: %s", c.StartReceiver(ctx, processKeptnCloudEvent))
+	log.Printf("This is ctx %s", c.StartReceiver(ctx, processKeptnCloudEvent))
+	log.Fatalf("failed to start receiver: %s", c.StartReceiver(ctx, runLoadTests))
 
 	return 0
 }

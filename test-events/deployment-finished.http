@@ -29,7 +29,7 @@ Content-Type: application/cloudevents+json
     "image": "docker.io/keptnexamples/carts",
     "labels": {
       "testid": "12345",
-      "buildId": "build17",
+      "buildnr": "build17",
       "runby": "JohnDoe"
     },
     "deploymentURILocal": "http://carts.sockshop-staging.svc.cluster.local",

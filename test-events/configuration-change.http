@@ -28,7 +28,7 @@ Content-Type: application/cloudevents+json
     },
     "labels": {
       "testid": "12345",
-      "buildId": "build17",
+      "buildnr": "build17",
       "runby": "JohnDoe"
     }
   }
